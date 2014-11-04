@@ -1,0 +1,8 @@
+#!/bin/bash
+
+exec 1> $0.txt
+exec 2>&1
+
+in=20090209/jjj.tcpdump
+
+tcpdump -nnvr $in

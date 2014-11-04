@@ -1,0 +1,20 @@
+#!/bin/bash
+
+nodeid=${1:?}
+
+old=~/manpower/20090212/ipinterface.txt
+new=~/manpower/20090310/ipinterface.txt
+
+echo ""
+echo "  OLD"
+echo ""
+
+grep $nodeid $old | sort
+
+echo ""
+echo "  NEW"
+echo ""
+
+grep $nodeid $new | sort
+
+echo ""

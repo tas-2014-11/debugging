@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+
+use strict;
+
+while(<>) {
+	chomp;
+	my ($trash,$s) = split(/VBS/);
+	$s =~ s/[\[\]]//g;
+	#print "$s\n";
+	my @a = split(/; /,$s);
+	foreach (@a) {
+		$s = $_;
+		$s =~ s/ = .*//g;
+		print ".$s\n";
+	}
+}

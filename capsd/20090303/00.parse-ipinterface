@@ -1,0 +1,9 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+. common
+
+in=~/manpower/root/instrument/var/$yyyy/$mm/$dd/ipinterface.$hh.txt.gz
+
+zcat $in | awk -F'|' '{print $7,$1,$2}' | sort -u

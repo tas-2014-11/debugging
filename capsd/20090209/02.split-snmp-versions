@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#exec 1> $0.txt
+#exec 2>&1
+
+in=01.getresponse.txt
+
+grep SNMPv1 $in > $0.v1.txt
+grep SNMPv2c $in > $0.v2c.txt

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+# compare the list of bad nodes we derived from capsd logs
+
+awk '{print $2}' 01.locate-bad-rescans-in-capsd-log.txt | sort -n > $0.00.txt
+
+
+# with the list of nodes which lack managed interfaces
+# and are not forced unmanaged
+
+in=05.locate-all-nodes-without-snmpprimaries.txt
+grep M $in | grep -v F | awk '{print $1}' | sort -n > $0.01.txt
+
+wc $0.0[01].txt
+diff $0.0[01].txt

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=00.preprocess-capsd-durations.txt
+
+sort $in | 02.calculate-capsd-durations

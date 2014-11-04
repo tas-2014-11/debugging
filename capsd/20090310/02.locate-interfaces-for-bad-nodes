@@ -1,0 +1,8 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=01.locate-bad-rescans-in-capsd-log.txt
+
+03.locate-interfaces-for-bad-nodes < $in | sort -t'|' -k1,1n -k2,2 -k3,3n
+

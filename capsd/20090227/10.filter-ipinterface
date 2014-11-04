@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=00.parse-ipinterface.txt
+
+grep '2009-02-2[5678]' $in

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+dd=${1:?}
+
+graph-iostat $dd
+graph-vmstat-cache $dd

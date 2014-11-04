@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+06.get-node-data-for-ip-addresses

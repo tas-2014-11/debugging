@@ -1,0 +1,11 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+d=before-crash
+d=after-crash
+d=${1:?}-crash
+
+in=$d/td.txt
+
+grep '^"' $in | sort

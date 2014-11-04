@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=d.d/node.txt
+
+awk -F'|' '{print $16,$1}' $in | sort

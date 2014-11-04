@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $h = {};
+
+while(<>) {
+	chomp;
+
+	my $outkey = $_;
+
+	if(/^pool-/) { $outkey = substr($_,0,6); }
+	if(/^Timer-/) { $outkey = "Timer"; }
+	if(/^TCPRecord Chuncker/) { $outkey = "TCPRecord Chuncker"; }
+	if(/^PingManager.Pinger/) { $outkey = "PingManager.Pinger"; }
+	if(/Event TCP Receiver.5817..127.0.0.1:/) { $outkey = "Event TCP Receiver[5817][127.0.0.1:"; }
+	if(/Capsd Rescan Pool/) { $outkey = "Capsd Rescan Pool"; }
+	if(/GC task thread/) { $outkey = "GC task thread"; }
+	if(/ICMPReceiver/) { $outkey = "ICMPReceiver"; }
+
+	++$h->{$outkey};
+#DefaultUDPTransportMapping_10.13.18.51/0
+}
+
+foreach (sort (keys %$h)) {
+	my $key = $_;
+	my $value = $h->{$key};
+	print "$value\t$key\n";
+}

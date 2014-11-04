@@ -1,0 +1,21 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=02.locate-interfaces-for-bad-nodes.txt
+
+# the above list contains interfaces for those nodes which are spam-scanning
+
+
+# here we find all the managed interfaces in the above list
+
+grep M $in|cut -d'|' -f1|sort -nu > $0.M.txt
+
+
+# and all the snmp primaries
+
+grep P $in|cut -d'|' -f1|sort -nu > $0.P.txt
+
+
+wc $0.[MP].txt
+diff $0.[MP].txt

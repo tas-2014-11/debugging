@@ -1,0 +1,10 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+. common
+
+#in=capsd-logs/capsd.log
+#in=capsd-logs/capsd.log.4
+
+cat $in | 31.morethangrep

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=d.d/node.txt
+in=/home/tas/manpower/root/instrument/var/2009/02/*/node.*.txt.gz
+
+zcat $in | awk -F'|' '{print $16,$1}' | sort -u

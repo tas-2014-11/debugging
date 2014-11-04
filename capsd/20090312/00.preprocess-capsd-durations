@@ -1,0 +1,13 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+#. common
+
+d=~/manpower/20090311/d.d/capsd-logs
+l=$d/*.tar.gz
+
+for i in $l
+do
+	tar --to-stdout -zxf $i | egrep 'RescanProcessor: RescanProcessor|DbNodeEntry: DbNodeEntry\('
+done

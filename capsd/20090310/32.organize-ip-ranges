@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=../../20090225/WT/monitor/etc/capsd-configuration.xml
+
+33.organize-ip-ranges < $in

@@ -1,0 +1,19 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+nodeid=2692
+
+echo ""
+
+grep $nodeid node.txt | awk -F '|' '{print $16,$1}'
+
+echo ""
+
+
+# 2692|10.152.104.100|65539|usd1w028t.manpower.com|N|1|2008-12-17 02:04:22.546+00|S|5790
+
+
+grep $nodeid ipinterface.txt | awk -F'|' '{print $7,$1,$2,$3,$5}'
+
+echo ""

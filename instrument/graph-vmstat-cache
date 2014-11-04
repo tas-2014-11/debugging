@@ -1,0 +1,42 @@
+#!/bin/bash
+
+yyyy=2008
+mm=02
+dd=09
+dd=${1:?}
+
+#in=~/instrument/var/$yyyy/$mm/$dd/vmstat.*  
+d=~
+d=/home/tas/spirit/instrument/20080214
+in=$d/instrument/$yyyy/$mm/$dd/vmstat.*  
+
+ymd=$yyyy-$mm-$dd
+bn=$0.$ymd
+
+grep --no-filename -v [a-z] $in | sed 's/^ //g' | awk '{
+	when=line++
+	when /= 60.0
+	#when %= 60.0
+	value=$6
+	value /= 1024
+	value /= 1024
+	print when,value
+}' > $bn.txt
+
+gnuplot <<EOD
+set terminal png
+set output '$bn.png'
+set mxtics
+set grid xtics mxtics
+set xrange [0:24]
+set yrange [0:12]
+#set ylabel 'cache size (kB)'
+set ylabel 'cache size (GB)'
+set xlabel 'hours past midnight on $ymd'
+#plot '$bn.txt','$bn.txt' with lines
+plot '$bn.txt' with lines
+EOD
+
+mkdir -p data graphs
+mv $bn.txt data
+mv $bn.png graphs

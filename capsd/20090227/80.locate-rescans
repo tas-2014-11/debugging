@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+grep '02-27 2' 11.filter-node.txt | awk '{print $3}' | sort -n | uniq -c | sort -nr

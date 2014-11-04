@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+sort 32.organize-ip-ranges.txt

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+dd=${1:?}
+
+d=200801$dd
+d=200802$dd
+
+f=$d/cd.0.txt
+
+if [ ! -f $f ]
+then
+	f=$d/1.txt
+	if [ ! -f $f ]
+	then
+		echo "eh?"
+		exit 1
+	fi
+fi
+
+cat $f | awk '{
+	sum += $1
+	N++
+}
+
+END {
+	#print "sum=",sum
+	#print "N=" N
+
+	mean = sum / N
+	#print "mean=" mean
+
+	mean /= 1000
+
+	print "mean=" mean " N=" N
+}
+'

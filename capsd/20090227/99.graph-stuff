@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# 2009-02-25 05:03:00.000+00 6.14
+
+in2=02.parse-loadavg.txt
+
+in1=01.parse-node.txt
+in1=11.filter-node.txt
+
+in0=10.filter-ipinterface.txt
+
+one() {
+	cat <<EOD
+	set terminal png size 1024 768
+	set output '$0.png'
+
+	set xdata time
+	set timefmt "%Y-%m-%d %H:%M:%S"
+	set format x "%m-%d\n%H"
+	#set format x "%b-%d\n%H"
+	#set format x "%d-%H"
+
+	set mxtics 2
+	set mytics 2
+	set grid xtics mxtics ytics mytics
+
+	#set xrange ["2009-02-24 01:01:01":"2009-02-29 20:20:20"]
+	#set xrange ["24-01":"28-23"]
+	#set xrange [1234567890:1236667890]
+	#set xlabel "date\ntime"
+	set xlabel "month-day\nhour"
+	#set xlabel "when"
+
+	set ylabel 'loadavg5'
+
+	set y2tics border
+	set y2range [0:5000]
+	set y2label 'nodeid'
+	plot '$in1' using 1:3 with points axes x1y2 title "nodeid vs node.lastcapsdpoll",'$in2' using 1:4 with lines title "loadavg vs time"
+	#,'$in0' using 1:3 with points axes x1y2 title "nodeid vs ipinterface.lastcapsdpoll"
+
+	#plot '$in2' using 1:5 with lines
+	#plot '$in' using 1:3 with lines,'$in' using 1:4 with lines,'$in' using 1:5 with lines
+EOD
+}
+
+one > $0.txt
+gnuplot $0.txt
+
+exit
+
+# http://www.cs.hmc.edu/~vrable/gnuplot/using-gnuplot.html
+# http://www.duke.edu/~hpgavin/gnuplot.html
+
+# lines, points, linespoints, impulses, dots, steps, fsteps, histeps,
+# errorbars, xerrorbars, yerrorbars, xyerrorbars,
+# boxes, boxerrorbars, boxxyerrorbars, financebars, candlesticks or vector

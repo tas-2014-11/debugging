@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=00.before-or-after.txt
+
+02.extract-thread-names < $in

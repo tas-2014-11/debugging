@@ -1,0 +1,39 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+. common
+
+l=/home/tas/manpower/root/instrument/var/$yyyy/$mm/$dd/loadavg.$hh.txt
+
+for i in $l
+do
+	yyyy=${i##*var/}
+	yyyy=${yyyy%%/*}
+
+	mm=${i#*var/*/}
+	mm=${mm%%/*}
+
+	dd=${i%/*}
+	dd=${dd##*/}
+	#echo dd=$dd
+
+	hh=${i%.txt}
+	hh=${hh##*.}
+	#echo dd=$dd hh=$hh
+
+	when="$yyyy-$mm-${dd}T$hh"
+	ymd="$yyyy-$mm-$dd"
+
+	grep [0-9] $i | awk '{
+		hms = sprintf("%02d:%02d:00.000+00",hh,min)
+		ss = ":00.000+00"
+
+		loadavg1=$1
+		loadavg5=$2
+		loadavg15=$3
+
+		print ymd,hms,loadavg1,loadavg5,loadavg15
+		++min
+	}' ymd=$ymd hh=$hh
+done

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=00.locate-spamming-nodes-in-node-table.txt
+
+awk '{print $1}' $in|uniq -c|sort -n|grep -v '      [12] '

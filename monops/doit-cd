@@ -1,0 +1,14 @@
+#!/bin/bash
+
+dd=${1:?}
+
+d=200801${dd:?}
+d=200802${dd:?}
+f=$d/raw/cd.tar.gz
+
+tar zxOf $f | grep --no-filename ^D | cut -d: -f5 > $d/cd.0.txt
+sort -n $d/cd.0.txt | bucketem > $d/cd.1.txt
+
+label=`avg $dd`
+
+gp-cd $d "$label"

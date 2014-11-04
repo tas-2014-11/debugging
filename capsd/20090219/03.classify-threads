@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=01.extract-thread-names.txt
+
+04.classify-threads < $in | sort -nr

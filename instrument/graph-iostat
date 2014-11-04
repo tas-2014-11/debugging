@@ -1,0 +1,38 @@
+#!/bin/bash
+
+yyyy=2008
+mm=02
+dd=09
+dd=${1:?}
+
+#in=~/instrument/var/$yyyy/$mm/$dd/iostat.*  
+d=/home/tas/spirit/instrument/20080214
+in=$d/instrument/$yyyy/$mm/$dd/iostat.*  
+
+ymd=$yyyy-$mm-$dd
+bn=$0.$ymd
+
+#cat $in | awk '/^sda/ {
+cat $in | awk '/c1d0/ {
+	when=line++
+	when /= 60.0
+	#when %= 60.0
+	value=$4
+	print when,value
+}' > $bn.txt
+
+gnuplot <<EOD
+set terminal png
+set output '$bn.png'
+set xrange [0:24]
+set mxtics
+set grid xtics mxtics
+set ylabel 'reads per second'
+set xlabel 'hours past midnight on $ymd'
+#plot '$bn.txt','$bn.txt' with lines
+plot '$bn.txt' with lines
+EOD
+
+mkdir -p data graphs
+mv $bn.txt data
+mv $bn.png graphs

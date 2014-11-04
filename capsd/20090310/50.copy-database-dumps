@@ -1,0 +1,8 @@
+#!/bin/bash
+
+d=~/manpower/root/instrument/var/2009/03/10
+
+hh=23
+
+zcat $d/node.$hh.txt.gz > node.txt
+zcat $d/ipinterface.$hh.txt.gz > ipinterface.txt

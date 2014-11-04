@@ -1,0 +1,9 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+. common
+
+in=/home/tas/manpower/root/instrument/var/$yyyy/$mm/$dd/node.$hh.txt.gz
+
+zcat $in | awk -F'|' '{print $16,$1}' | sort -u

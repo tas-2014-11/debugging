@@ -1,0 +1,6 @@
+#!/bin/bash
+
+d=../root/instrument/var/2009/03/17
+hh=17
+
+zcat $d/ipinterface.$hh.txt.gz > ipinterface.txt

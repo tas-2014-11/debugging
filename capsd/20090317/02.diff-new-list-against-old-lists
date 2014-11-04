@@ -1,0 +1,30 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+newest=01.locate-spamming-nodes-in-node-table.txt
+
+normalize_newest() {
+	awk '{print $2}' $newest | sort -n
+}
+
+normalize_newest > $0.new.txt
+
+old1=../20090312/04.diff-old-spammers-and-new-spammers.old.txt
+old2=../20090312/04.diff-old-spammers-and-new-spammers.new.txt
+
+echo
+
+wc $old1 $old2 $0.new.txt
+
+echo
+echo
+
+diff $old1 $0.new.txt
+
+echo
+echo
+
+diff $old2 $0.new.txt
+
+echo

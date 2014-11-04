@@ -1,0 +1,10 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+d=../../20090225/WT/monitor/etc
+
+k=10.201.8
+
+cd $d
+grep $k *.xml

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+l="
+before
+not
+after
+"
+
+for i in $l
+do
+	d=$i-crash
+	echo $d
+	awk '{print $1}' $d/03.classify-threads.txt | avg
+done

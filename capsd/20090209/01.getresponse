@@ -1,0 +1,8 @@
+#!/bin/bash
+
+exec 1> $0.txt
+exec 2>&1
+
+in=00.tcpdump.txt
+
+grep GetResponse $in

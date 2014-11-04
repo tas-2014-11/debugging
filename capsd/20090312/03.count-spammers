@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+awk '{print $5}' 01.calculate-capsd-durations.txt|sort|uniq -c|sort -n

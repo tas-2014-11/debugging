@@ -1,0 +1,27 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+l="
+1911
+1992
+1993
+1994
+2017
+2220
+2222
+2474
+2557
+2561
+2562
+2566
+2575
+3080
+"
+
+echo ""
+for i in $l
+do
+	grep ^$i ipinterface.txt
+	echo ""
+done

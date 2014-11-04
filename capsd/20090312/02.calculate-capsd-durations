@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+
+#2009-03-10 23:16:23,584 DEBUG [Capsd Rescan Pool-fiber11] DbNodeEntry: DbNodeEntry(989 , localhost)
+#2009-03-10 23:17:15,590 DEBUG [Capsd Rescan Pool-fiber14] RescanProcessor: RescanProcessor for node w/ nodeid 980 completed.
+
+use strict;
+
+#gmtime(1230768000)=Thu Jan  1 00:00:00 2009
+#gmtime(1235865600)=Sun Mar  1 00:00:00 2009
+
+# add millis
+my $date_pat = '(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}),(\d{3})';
+my $fiber_pat = 'Capsd Rescan Pool-fiber(\d+)';
+my $rescan_pat = 'RescanProcessor: RescanProcessor for node w. nodeid (\d+) completed.';
+my $dbnodeentry_pat = 'DbNodeEntry: DbNodeEntry.(\d+) , localhost.';
+
+my $start_pat = "$date_pat.*$fiber_pat.*$rescan_pat";
+my $end_pat = "$date_pat.*$fiber_pat.*$dbnodeentry_pat";
+
+my $pat;
+
+sub normalize_time {
+	my $dd = shift;
+	my $hh = shift;
+	my $mm = shift;
+	my $ss = shift;
+	#my $ms = shift;
+	my $t0 = 1235865600;
+
+	my $t = $t0;
+	$t += 86400 * $dd;
+	$t += 3600 * $hh;
+	$t += 60 * $mm;
+	$t += $ss;
+	$t;
+}
+
+my $h = {};
+my $lastwhen = 0;
+
+while(<>) {
+	chomp;
+
+	if(/$start_pat/ || /$end_pat/) {
+		#print "$_\n";
+
+		my $year = $1;
+		my $month = $2;
+		my $day = $3;
+		my $hour = $4;
+		my $minute = $5;
+		my $second = $6;
+		my $millis = $7;
+		my $fiber = $8;
+		my $nodeid = $9;
+
+		my $when = normalize_time($day,$hour,$minute,$second,$millis);
+		if($when - $lastwhen > 3600) {
+			#print "lastwhen=$lastwhen when=$when\n"; 
+			$h = {};
+			$lastwhen = $when;
+		}
+		$lastwhen = $when;
+
+		my $which;
+		my $end;
+
+		if(/$dbnodeentry_pat/) {
+			$which = "START";
+			$h->{$nodeid} = $when;
+		}
+
+		my $duration;
+		if(/$rescan_pat/) {
+			$duration = $when - $h->{$nodeid} if(defined($h->{$nodeid}));
+			$which = "END  ";
+			$end = 1;
+		}
+
+		print "$which ";
+		print "$year-$month-$day $hour:$minute:$second,$millis";
+		print " ";
+		printf("fiber%02d",$fiber);
+		print " ";
+		printf("nodeid=%04d",$nodeid);
+		if($end) {
+			print " ";
+			if(defined($duration)) {
+				print "duration=$duration seconds";
+			}
+			else {
+				print "GAP";
+			}
+		}
+		print "\n";
+	}
+}

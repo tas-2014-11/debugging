@@ -1,0 +1,186 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $node = {};
+
+sub slurp_node {
+	my $fn = "../20090212/node.txt";
+	open(my $in,"<$fn") || die("open($fn): $!");
+	while(<$in>) {
+		chomp;
+
+		my ($nodeid,$dpname,$nodecreatetime,$nodeparentid,
+		$nodetype,$nodesysoid,$nodesysname,$nodesysdescription,
+		$nodesyslocation,$nodesyscontact,$nodelabel,$nodelabelsource,
+		$nodenetbiosname,$nodedomainname,$operatingsystem,$lastcapsdpoll,
+		$usessnmpadapter) = split(/\|/);
+
+		my $h = {};
+		$h->{nodeid} = $nodeid;
+		$h->{dpname} = $dpname;
+		$h->{nodecreatetime} = $nodecreatetime;
+		$h->{nodeparentid} = $nodeparentid;
+		$h->{nodetype} = $nodetype;
+		$h->{nodesysoid} = $nodesysoid;
+		$h->{nodesysname} = $nodesysname;
+		$h->{nodesysdescription} = $nodesysdescription;
+		$h->{nodesyslocation} = $nodesyslocation;
+		$h->{nodesyscontact} = $nodesyscontact;
+		$h->{nodelabel} = $nodelabel;
+		$h->{nodelabelsource} = $nodelabelsource;
+		$h->{nodenetbiosname} = $nodenetbiosname;
+		$h->{nodedomainname} = $nodedomainname;
+		$h->{operatingsystem} = $operatingsystem;
+		$h->{lastcapsdpoll} = $lastcapsdpoll;
+		$h->{usessnmpadapter} = $usessnmpadapter;
+
+		$node->{$nodeid} = $h;
+
+		#print "$nodeid,$nodelabel,$nodesysdescription\n";
+	}
+}
+
+sub print_node {
+	for my $nodeid (sort {$a <=> $b} (keys %$node)) {
+		my $h = $node->{$nodeid};
+		print "$nodeid,$h->{nodelabel},$h->{nodesysdescription}";
+		print "\n";
+	}
+}
+
+my $ipinterface = {};
+
+sub slurp_ipinterface {
+	my @fields = qw/nodeid ipaddr ifindex iphostname
+		ismanaged ipstatus iplastcapsdpoll issnmpprimary/;
+
+	my $fn = "../20090212/ipinterface.txt";
+	open(my $in,"<$fn") || die("open($fn): $!");
+	while(<$in>) {
+		chomp;
+		my @a = split(/\|/);
+
+		my $h = {};
+
+		my $i = 0;
+		foreach my $field (@fields) {
+			$h->{$field} = $a[$i];
+			++$i;
+		}
+
+		next unless ($h->{issnmpprimary} eq "P");
+
+		#my $key = $a[1];
+		my $key = $a[0];
+		$ipinterface->{$key} = $h;
+	}
+}
+
+sub print_ipinterface {
+	for my $ip (keys %$ipinterface) {
+		my $h = $ipinterface->{$ip};
+		print "$ip,$h->{nodeid},$h->{ifindex},$h->{iplastcapsdpoll}";
+		print "\n";
+	}
+}
+
+my $ipaddress = {};
+
+sub slurp_ipaddresses {
+	my $fn = "04.locate-v2c-nodes-with-nosuchname.txt";
+	open(my $in,"<$fn") || die("open($fn): $!");
+	while(<$in>) {
+		chomp;
+		my $ip = $_;
+		#print "$ip\n";
+		$ipaddress->{$ip} = 1;
+	}
+}
+
+sub merge1 {
+	foreach my $ip (keys %$ipaddress) {
+		print "$ip";
+
+		my $h = $ipinterface->{$ip};
+		my $nodeid = $h->{nodeid};
+		#print " $nodeid ";
+
+		$h = $node->{$nodeid};
+		my $sysdescr = $h->{nodesysdescription};
+		print " $sysdescr ";
+
+		print "\n";
+	}
+}
+
+sub merge {
+	foreach my $nodeid (keys %$node) {
+		my $h;
+
+		$h = $node->{$nodeid};
+		my $sysdescr = $h->{nodesysdescription};
+		#print " $sysdescr ";
+
+		$h = $ipinterface->{$nodeid};
+		my $ip = $h->{ipaddr};
+		#print " $ip ";
+
+		my $isbad = defined($ipaddress->{$ip});
+		#print " *** " if($isbad);
+
+		if($isbad) { print "X "; }
+		else { print "  "; }
+
+		printf("%5s ",$nodeid);
+		printf("%12s ",$ip);
+		print "$sysdescr";
+
+		print "\n";
+	}
+}
+
+sub main {
+	slurp_node;
+	#print_node;
+
+	slurp_ipinterface;
+	#print_ipinterface;
+
+	slurp_ipaddresses;
+
+	merge;
+}
+
+main;
+
+my $doc ="
+ nodeid             | integer                     | not null
+ dpname             | character varying(12)       | not null
+ nodecreatetime     | timestamp without time zone | not null
+ nodeparentid       | integer                     | 
+ nodetype           | character(1)                | 
+ nodesysoid         | character varying(256)      | 
+ nodesysname        | character varying(256)      | 
+ nodesysdescription | character varying(256)      | 
+ nodesyslocation    | character varying(256)      | 
+ nodesyscontact     | character varying(256)      | 
+ nodelabel          | character varying(256)      | 
+ nodelabelsource    | character(1)                | 
+ nodenetbiosname    | character varying(16)       | 
+ nodedomainname     | character varying(16)       | 
+ operatingsystem    | character varying(64)       | 
+ lastcapsdpoll      | timestamp without time zone | 
+ usessnmpadapter    | character varying(1)        | 
+";
+
+my $moredoc = "
+ nodeid          | integer                     | not null
+ ipaddr          | character varying(16)       | not null
+ ifindex         | integer                     | 
+ iphostname      | character varying(256)      | 
+ ismanaged       | character(1)                | 
+ ipstatus        | integer                     | 
+ iplastcapsdpoll | timestamp without time zone | 
+ issnmpprimary   | character(1)                | 
+";

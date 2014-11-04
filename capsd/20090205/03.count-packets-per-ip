@@ -1,0 +1,13 @@
+#!/bin/bash
+
+in1=02.split-snmp-versions.v1.txt
+in2=02.split-snmp-versions.v2c.txt
+
+go() {
+	#awk '{print $18}' $1 | sort | uniq -c | sort -nr
+
+	fgrep -v .1.3.6.1.2.1.2.2.1 $1 | awk '{print $18}' | sort | uniq -c | sort -nr
+}
+
+go $in1 > $0.v1.txt
+go $in2 > $0.v2.txt

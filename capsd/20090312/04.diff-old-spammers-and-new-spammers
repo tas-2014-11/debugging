@@ -1,0 +1,24 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+# 3 2675
+in_old=~/manpower/20090227/d.d/01.locate-bad-rescans-in-capsd-log.txt
+
+# 8 nodeid=0641
+in_new=03.count-spammers.txt
+
+normalize_old() {
+	awk '{print $2}' $in_old | sort -n
+}
+
+normalize_new() {
+	grep -v ' [12] nodeid' $in_new | cut -d= -f2 | sed s/^0// | sort -n
+}
+
+normalize_old > $0.old.txt
+normalize_new > $0.new.txt
+
+l="$0.old.txt $0.new.txt"
+wc $l
+diff $l

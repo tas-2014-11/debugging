@@ -1,0 +1,9 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+d=../root/instrument/var/2009/03/09
+d=../root/instrument/var/2009/03/17
+l=$d/node.*.txt.gz
+
+zcat $l | awk -F'|' '{print $1,$16}' | sort -u | sort -n

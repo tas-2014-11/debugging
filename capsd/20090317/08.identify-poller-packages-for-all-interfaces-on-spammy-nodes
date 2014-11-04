@@ -1,0 +1,396 @@
+#!/usr/bin/perl
+
+use strict;
+
+#<package name="standard">
+#<specific>64.132.94.250</specific>
+#<include-range begin="10.0.9.3" end="10.0.9.17"/>
+
+sub dq2int {
+	my $dq = shift;
+	my @a = split(/\./,$dq);
+	#print "dq=$dq a0=$a[0] a1=$a[1] a2=$a[2] a3=$a[3]\n";
+
+	my $i = 0;
+	$i |= $a[0] << 24;
+	$i |= $a[1] << 16;
+	$i |= $a[2] << 8;
+	$i |= $a[3];
+	$i;
+}
+
+my $pollerconfig = {};
+
+sub slurp_pollerconfig {
+	my $packagename;
+	my $fn = "WT/monitor/etc/poller-configuration.xml";
+	open(my $in,"<$fn") || die("open($fn): $!");
+	while(<$in>) {
+		chomp;
+
+		if(/package name="(.+)"/) {
+			$packagename = $1;
+			$pollerconfig->{$packagename} = {};
+		}
+
+		if(/.specific.(\d+\.\d+\.\d+\.\d+)..specific/) {
+			my $i = dq2int($1);
+			$pollerconfig->{$packagename}->{specific}->{$i} = 1;
+		}
+
+		if(/include-range begin="(\d+\.\d+\.\d+\.\d+)" end="(\d+\.\d+\.\d+\.\d+)"/) {
+			my $from = dq2int($1);
+			my $to = dq2int($2);
+
+			$pollerconfig->{$packagename}->{includerange}->{$from} = $to;
+
+			#my $s = hex($1);
+			#print "$1 $s ";
+			#print join ".", map { hex } $1;
+			#print "\n";
+		}
+	}
+	close($in);
+}
+
+my $discoveryconfig = {};
+
+sub slurp_discoveryconfig {
+	my $from;
+	my $to;
+
+	my $fn = "WT/monitor/etc/discovery-configuration.xml";
+	open(my $in,"<$fn") || die("open($fn): $!");
+	while(<$in>) {
+		chomp;
+
+		if(/.specificIP.(\d+\.\d+\.\d+\.\d+)..specificIP/) {
+			my $i = dq2int($1);
+			$discoveryconfig->{specific}->{$i} = 1;
+		}
+
+		if(/begin.(\d+\.\d+\.\d+\.\d+)..begin/) {
+			#print "begin $1\n";
+			$from = dq2int($1);
+		}
+
+		if(/end.(\d+\.\d+\.\d+\.\d+)..end/) {
+			#print "end $1\n";
+			$to = dq2int($1);
+		}
+
+		if(/\/include.range/) {
+			#print "include $from $to\n";
+			$discoveryconfig->{include}->{$from} = $to;
+			undef($from);
+			undef($to);
+		}
+
+		if(/\/exclude.range/) {
+			#print "exclude $from $to\n";
+			$discoveryconfig->{exclude}->{$from} = $to;
+			undef($from);
+			undef($to);
+		}
+	}
+	close($in);
+}
+
+sub int2dq {
+	my $i = shift;
+	#join('.',unpack("C*",$i));
+
+	sprintf("%d.%d.%d.%d",0xff&($i>>24),0xff&($i>>16),0xff&($i>>8),0xff&($i));
+}
+
+sub hex2dq {
+	my $ip = shift;
+	join ".", map { hex } $ip =~ /../g;
+}
+
+#31|10.13.16.118|65540|10.13.16.118|M|1|2009-02-27 03:27:22.006+00|S|654
+
+sub parse_one_ipinterface {
+	my $line = shift;
+	my $fields = shift;
+
+	my @a = split(/\|/,$line);
+
+	my $href = {};
+	my $i = 0;
+	foreach(@$fields) {
+		my $value = $a[$i];
+		$value = "" unless(defined($value));
+		$href->{$_} = $value;
+		++$i;
+	}
+	$href;
+}
+
+sub slurp_table {
+	my $filename = shift;
+	my $pk_field = shift;
+	my $fields = shift;
+
+	my $table = {};
+	open(my $in,"<$filename") || die("open($filename): $!");
+	while(<$in>) {
+		chomp;
+		my $row = parse_one_ipinterface($_,$fields);
+		my $key = $row->{$pk_field};
+		$table->{$key} = $row;
+	}
+	close(in);
+	$table;
+}
+
+
+
+my @ipinterface_fields = qw/nodeid ipaddr ifindex iphostname ismanaged
+	ipstatus iplastcapsdpoll issnmpprimary id/;
+
+my $ipinterface = {};
+
+sub slurp_ipinterface {
+	my $filename = "ipinterface.txt";
+	$filename = "04.examine-interfaces-on-spamming-nodes.txt";
+	my $pk_field = "id";
+
+	$ipinterface = slurp_table($filename,$pk_field,\@ipinterface_fields);
+}
+
+sub dump_hash_of_hashes {
+	my $h = shift;
+	my $keys = shift;
+	foreach(sort keys(%$h)) {
+		dump_hash($h->{$_},$keys);
+	}
+}
+
+sub dump_hash {
+	my $h = shift;
+	my $keys = shift;
+	my $separator = "";
+
+	#print "keys=$keys\n";
+	#print "keys=@$keys\n" if(defined($keys));
+
+	my @keys = sort keys(%$h);
+	$keys = \@keys unless(defined($keys));
+
+	#print "keys=$keys\n";
+	#print "keys=@$keys\n";
+
+	foreach(@$keys) {
+		print "$separator";
+		#print "$_=$h->{$_}";
+		print "$h->{$_}";
+		$separator = "|";
+	}
+	print "\n";
+}
+
+sub dump_hash_of_integers {
+	my $h = shift;
+	my $keys = shift;
+	foreach(sort {$a <=> $b} keys(%$h)) {
+		print "$_=$h->{$_}\n";
+	}
+}
+
+sub dump_pollerconfig {
+	foreach my $packagename (sort keys(%$pollerconfig)) {
+		my $h;
+
+		print "packagename=$packagename\n";
+
+		$h = $pollerconfig->{$packagename}->{specific};
+		foreach(sort keys(%$h)) {
+			print "specific ";
+			print int2dq($_);
+			print "\n";
+		}
+
+		$h = $pollerconfig->{$packagename}->{includerange};
+		foreach my $from (sort keys(%$h)) {
+			my $to = $h->{$from};
+			print "range ";
+			print int2dq($from);
+			print " ";
+			print int2dq($to);
+			print "\n";
+		}
+
+		print "\n";
+	}
+}
+
+sub dump_discoveryconfig {
+	my $h;
+
+	print "discoveryconfig=$discoveryconfig\n";
+
+	$h = $discoveryconfig->{specific};
+	print "specific=$h\n";
+	foreach(sort keys(%$h)) {
+		print "specific ";
+		print int2dq($_);
+		print "\n";
+	}
+
+	$h = $discoveryconfig->{include};
+	print "include=$h\n";
+	foreach my $from (sort keys(%$h)) {
+		my $to = $h->{$from};
+		print "include ";
+		print int2dq($from);
+		print " ";
+		print int2dq($to);
+		print "\n";
+	}
+
+	$h = $discoveryconfig->{exclude};
+	print "exclude=$h\n";
+	foreach my $from (sort keys(%$h)) {
+		my $to = $h->{$from};
+		print "exclude ";
+		print int2dq($from);
+		print " ";
+		print int2dq($to);
+		print "\n";
+	}
+}
+
+sub ip_is_in_discovery_specific {
+	my $ip = shift;
+	$ip = dq2int($ip);
+	my $h = $discoveryconfig->{specific};
+	foreach(sort keys(%$h)) {
+		return(1) if($_ == $ip);
+	}
+	0;
+}
+
+sub ip_is_in_range {
+	my $ip = shift;
+	my $h = shift;
+	foreach my $from (sort {$a <=> $b} keys(%$h)) {
+		my $to = $h->{$from};
+
+		#print "ip_is_in_range $ip $from $to\n";
+		if($ip >= $from && $ip <= $to) {
+			return(1);
+		}
+	}
+	0;
+}
+
+sub ip_is_in_discovery_include {
+	my $ip = shift;
+	$ip = dq2int($ip);
+	ip_is_in_range($ip,($discoveryconfig->{include}));
+}
+
+sub ip_is_in_discovery_exclude {
+	my $ip = shift;
+	$ip = dq2int($ip);
+	ip_is_in_range($ip,($discoveryconfig->{exclude}));
+}
+
+my $ipinterface_by_node;
+
+sub renormalize_ipinterface {
+	foreach my $h (values(%$ipinterface)) {
+		#print "$h\n";
+		#dump_hash($h);
+
+		my $nodeid = $h->{nodeid};
+
+		$ipinterface_by_node->{$nodeid}->{$h} = $h;
+	}
+}
+
+sub packagename_containing_this_ip {
+	my $ip = shift;
+	$ip = dq2int($ip);
+	
+	foreach my $packagename (sort keys(%$pollerconfig)) {
+		my $h = $pollerconfig->{$packagename}->{specific};
+		foreach(sort keys(%$h)) {
+			return($packagename) if($_ == $ip);
+		}
+
+		$h = $pollerconfig->{$packagename}->{includerange};
+		foreach my $from (sort keys(%$h)) {
+			my $to = $h->{$from};
+			return($packagename) if($ip >= $from && $ip <= $to);
+		}
+	}
+	return(undef);
+}
+
+sub dump_ipinterface_by_node {
+	foreach my $nodeid (sort {$a<=>$b} keys(%$ipinterface_by_node)) {
+		my $ip_count = 0;
+		my $ips_with_packages = 0;
+		my $ips_in_discovery = 0;
+
+		#print "NODEID($nodeid)\n";
+		my $h = $ipinterface_by_node->{$nodeid};
+		foreach(keys(%$h)) {
+			++$ip_count;
+
+			printf("%-13s ","NODEID($nodeid)");
+
+			my $hh = $h->{$_};
+			#dump_hash($hh,\@ipinterface_fields);
+
+			my $ip = $hh->{ipaddr};
+			my $packagename = packagename_containing_this_ip($ip);
+			++$ips_with_packages if(defined($packagename));
+
+			printf("%-15s ",$ip);
+			printf("%-20s ",$packagename);
+
+			my $specific = ip_is_in_discovery_specific($ip);
+			my $include = ip_is_in_discovery_include($ip);
+			my $exclude = ip_is_in_discovery_exclude($ip);
+			print "SPECIFIC " if($specific);
+			print "INCLUDE  " if($include);
+			print "EXCLUDE  " if($exclude);
+
+			if(($specific || $include) && (!$exclude)) {
+				++$ips_in_discovery;
+			}
+
+			print "\n";
+		}
+
+		#if(!defined($packagename)) { print "NOPOLLERS($nodeid)\n"; }
+
+		printf("%-13s ","NODEID($nodeid)");
+		printf("%-15s ","IPADDR($ip_count)");
+		printf("%-20s ","POLLERS($ips_with_packages)");
+		printf("%-9s ","DISCOVERY($ips_in_discovery)");
+
+		print "\n";
+		print "\n";
+	}
+}
+
+sub main {
+	slurp_ipinterface;
+	#dump_hash_of_hashes($ipinterface,\@ipinterface_fields);
+
+	slurp_pollerconfig;
+	#dump_pollerconfig;
+
+	slurp_discoveryconfig;
+	#dump_discoveryconfig;
+
+	renormalize_ipinterface;
+	dump_ipinterface_by_node;
+
+}
+
+main;

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+08.identify-poller-packages-for-all-interfaces-on-spammy-nodes

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+#2009-02-26 20:18:13,600 DEBUG [Capsd Rescan Pool-fiber8] RescanProcessor: RescanProcessor for node w/ nodeid 1993 completed.
+
+#grep 'RescanProcessor for node w/ nodeid' capsd-logs/* | cut -d: -f5-
+
+. common
+
+awk '/RescanProcessor for node w. nodeid/ {
+	print $13
+}' $in | sort -n | uniq -c | sort -n

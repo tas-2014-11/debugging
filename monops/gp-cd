@@ -1,0 +1,34 @@
+#!/bin/bash
+
+d=${1:?}
+f=$d/cd.1.txt
+out=$d/cd.png
+
+label=$2
+#label='line1\nline2\nline3'
+
+gnuplot <<EOD
+
+set terminal png
+set output '$out'
+#set terminal X11
+
+set xlabel 'duration of collector thread (seconds)'
+set ylabel 'number of occurrences'
+
+set label '$label' at 400,3000
+
+#set xrange [0:]
+#set yrange [0:]
+set xrange [0.5:10000]
+set yrange [0.5:10000]
+
+set logscale x
+set logscale y
+
+#plot '$f' with steps
+plot '$f','$f' with lines
+
+#pause -1
+
+EOD

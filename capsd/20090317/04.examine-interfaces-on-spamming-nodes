@@ -1,0 +1,14 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=01.locate-spamming-nodes-in-node-table.txt
+
+l=`awk '{print $2}' $in | sort -n`
+
+#echo ""
+for i in $l
+do
+	grep "^$i|" ipinterface.txt | sort
+	#echo ""
+done

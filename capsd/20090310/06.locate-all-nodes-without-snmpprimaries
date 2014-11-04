@@ -1,0 +1,142 @@
+#!/usr/bin/perl
+
+use strict;
+
+#31|10.13.16.118|65540|10.13.16.118|M|1|2009-02-27 03:27:22.006+00|S|654
+
+my $n = {};
+
+sub slurp_bad_nodeids {
+	while(<>) {
+		chomp;
+		my ($count,$nodeid) = split;
+		$n->{$nodeid} = $nodeid;
+	}
+	my @n = sort {$a <=> $b} keys %$n;
+	#print join("\n",@n);
+}
+
+sub parse_one_ipinterface {
+	my $line = shift;
+	my $fields = shift;
+
+	my @a = split(/\|/,$line);
+
+	my $href = {};
+	my $i = 0;
+	foreach(@$fields) {
+		my $value = $a[$i];
+		$value = "" unless(defined($value));
+		$href->{$_} = $value;
+		++$i;
+	}
+	$href;
+}
+
+sub slurp_table {
+	my $filename = shift;
+	my $pk_field = shift;
+	my $fields = shift;
+
+	my $table = {};
+	open(my $in,"<$filename") || die("open($filename): $!");
+	while(<$in>) {
+		chomp;
+		my $row = parse_one_ipinterface($_,$fields);
+		my $key = $row->{$pk_field};
+		$table->{$key} = $row;
+	}
+	close(in);
+	$table;
+}
+
+my @ipinterface_fields = qw/nodeid ipaddr ifindex iphostname ismanaged
+	ipstatus iplastcapsdpoll issnmpprimary id/;
+
+sub slurp_ipinterface {
+	my $filename = "ipinterface.txt";
+	my $pk_field = "id";
+
+	slurp_table($filename,$pk_field,\@ipinterface_fields);
+}
+
+sub dump_hash_of_hashes {
+	my $h = shift;
+	my $keys = shift;
+	foreach(sort keys(%$h)) {
+		dump_hash($h->{$_},$keys);
+	}
+}
+
+sub dump_hash {
+	my $h = shift;
+	my $keys = shift;
+	my $separator = "";
+
+	#print "keys=$keys\n";
+	#print "keys=@$keys\n" if(defined($keys));
+
+	my @keys = sort keys(%$h);
+	$keys = \@keys unless(defined($keys));
+
+	#print "keys=$keys\n";
+	#print "keys=@$keys\n";
+
+	foreach(@$keys) {
+		print "$separator";
+		#print "$_=$h->{$_}";
+		print "$h->{$_}";
+		$separator = "|";
+	}
+	print "\n";
+}
+
+my $ipinterface = {};
+
+my $nodeids = {};
+my $p = {};
+my $m = {};
+my $f = {};
+
+sub dump_hash_of_integers {
+	my $h = shift;
+	my $keys = shift;
+	foreach(sort {$a <=> $b} keys(%$h)) {
+		print "$_=$h->{$_}\n";
+	}
+}
+
+# i'm fortunate here because every node which has an interface which is
+# forced unmanaged also has only one interface
+sub locate_nodes_with_no_snmpprimary_or_managedinterface {
+	foreach my $h (values %$ipinterface) {
+		my $nodeid = $h->{nodeid};
+
+		$nodeids->{$nodeid} = 1;
+		++$p->{$nodeid} if($h->{issnmpprimary} eq "P");
+		++$m->{$nodeid} if($h->{ismanaged} eq "M");
+		++$f->{$nodeid} if($h->{ismanaged} eq "F");
+	}
+
+	foreach my $nodeid (sort {$a <=> $b} keys(%$nodeids)) {
+		my $s = "";
+		#$s .= "P" unless($p->{$nodeid});
+		$s .= "M" unless($m->{$nodeid});
+		$s .= "F" if($f->{$nodeid});
+
+		print "$nodeid\t$s\n" if(length($s));
+	}
+
+	#dump_hash_of_integers($p);
+	#dump_hash_of_integers($m);
+}
+
+sub main {
+	#slurp_bad_nodeids;
+	$ipinterface = slurp_ipinterface;
+	#dump_hash_of_hashes($ipinterface,\@ipinterface_fields);
+
+	locate_nodes_with_no_snmpprimary_or_managedinterface;
+}
+
+main;

@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $bucket_size = 10000;
+$bucket_size = 10000;
+$bucket_size = 1000;
+
+my $buckets = {};
+my $bucket_ceiling = 0;
+while(<>) {
+	chomp;
+
+	while($_ > $bucket_ceiling) {
+		$bucket_ceiling += $bucket_size;
+	}
+
+	++$buckets->{$bucket_ceiling};
+}
+
+foreach my $bucket (sort {int($a) <=> int($b)} keys(%$buckets)) {
+	print $bucket / 1000;
+	print " ";
+	print $buckets->{$bucket};
+	print "\n";
+}

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+exec 1> $0.txt
+exec 2>&1
+
+in=ccc.tcpdump
+
+#tcpdump -nnvv -r $in
+
+tcpdump -nnvr $in

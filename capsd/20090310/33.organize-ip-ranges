@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+
+use strict;
+
+#<range begin="10.13.16.16" end="10.13.16.254"/>
+
+my $h = {};
+my @hh = ();
+
+while(<>) {
+	chomp;
+
+	if(/range begin="([\d]+)\.([\d]+)\.([\d]+)\.([\d]+)" end="([\d]+)\.([\d]+)\.([\d]+)\.([\d]+)"/) {
+		my $lhs = 0;
+		my $rhs = 0;
+		# http://www.sysarch.com/Perl/sort_paper.html
+
+		$lhs |= $1 << 24;
+		$lhs |= $2 << 16;
+		$lhs |= $3 << 8;
+		$lhs |= $4;
+
+		$rhs |= $5 << 24;
+		$rhs |= $6 << 16;
+		$rhs |= $7 << 8;
+		$rhs |= $8;
+
+		#print "$1 $2 $3 $4 $5 $6 $7 $8\n";
+		#printf("0x%08x 0x%08x\n",$lhs,$rhs);
+
+		#print "$1.$2.$3.$4 $5.$6.$7.$8\n";
+
+		#$lhs = pack("C4",$1,$2,$3,$4);
+		#$rhs = pack("C4",$5,$6,$7,$8);
+
+		#print "lhs=$lhs rhs=$rhs\n";
+
+		#$h->{$lhs} = $rhs;
+
+		my $s = hex($1);
+		#print "$1 $s ";
+		#print join ".", map { hex } $1;
+		#print "\n";
+
+		my $both = sprintf("%08x%08x",$lhs,$rhs);
+		push(@hh,$both);
+	}
+}
+
+sub int2dq {
+	my $i = shift;
+	#join('.',unpack("C*",$i));
+
+	sprintf("%d.%d.%d.%d",0xff&($i>>24),0xff&($i>>16),0xff&($i>>8),0xff&($i));
+}
+
+sub hex2dq {
+	my $ip = shift;
+	join ".", map { hex } $ip =~ /../g;
+}
+
+foreach my $both (sort @hh) {
+	my $lhs = substr($both,0,8);
+	my $rhs = substr($both,8,8);
+
+	#print "$both  ";
+	print "$lhs ";
+	print "$rhs  ";
+
+	print hex2dq($lhs);
+	print " ";
+	print hex2dq($rhs);
+
+	print "\n";
+}
+
+exit;
+
+foreach my $ip1 (sort (keys %$h)) {
+	my $ip2 = $h->{$ip1};
+
+	#printf("0x%08x 0x%08x\n",$ip1,$ip2);
+
+	print int2dq($ip1);
+	print "  ";
+	print int2dq($ip2);
+	print "\n";
+}

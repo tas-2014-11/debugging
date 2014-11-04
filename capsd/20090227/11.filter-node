@@ -1,0 +1,7 @@
+#!/bin/bash
+
+exec 1> $0.txt
+
+in=01.parse-node.txt
+
+grep '2009-02-2[5678]' $in
